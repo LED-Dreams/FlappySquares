@@ -19,7 +19,7 @@ void Player::SetPos(int pos) {
 }
 
 void Player::Thrust(float thrust) {
-	this->vel += thrust;
+	this->vel = thrust;
 }
 
 void Player::Update() {

@@ -13,16 +13,17 @@
 #include "Player.hpp"
 
 #define WIDTH	32
-#define HEIGHT	16
+#define HEIGHT	24
 
 class FlappySquares
 {
 public:
-	FlappySquares(int width, int height, int obstacleCount, float speed);
+	FlappySquares(int width, int height);
 
 	int Update();
 
 private:
+	void StartGame();
 	void RenderDisplay();
 	void DrawObstacle(const Obstacle &o);
 
@@ -30,11 +31,9 @@ private:
 
 	enum {
 		STATE_MAINMENU,
-		STATE_GETREADY,
 		STATE_PLAY,
 		STATE_GAMEOVER
 	} gameState;
-	uint64_t stateTime;
 
 	std::unique_ptr<LEDMatrix> display;
 	std::unique_ptr<Player> player;
@@ -42,7 +41,7 @@ private:
 
 	Color bgColor;
 
-	int width, height;
+	int width, height, score;
 	float speed;
 };
 

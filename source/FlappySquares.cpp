@@ -2,7 +2,7 @@
 
 
 int main() {
-	FlappySquares game(WIDTH, HEIGHT, 3, 0.25);
+	FlappySquares game(WIDTH, HEIGHT);
 	timespec req, rem;
 	req.tv_sec = 0;
 	req.tv_nsec = 30000000L;
@@ -15,10 +15,10 @@ int main() {
 }
 
 
-FlappySquares::FlappySquares(int width, int height, int obstacleCount, float speed) {
+FlappySquares::FlappySquares(int width, int height) {
 	this->width = width;
 	this->height = height;
-	this->speed = speed;
+	this->speed = 0.25;
 
 	srand(time(NULL));
 
@@ -28,37 +28,64 @@ FlappySquares::FlappySquares(int width, int height, int obstacleCount, float spe
 	noecho();
 	nodelay(stdscr, TRUE);
 
-	display.reset(new LEDMatrix(width, height));
-
-	player.reset(new Player(height, height/2));
-
-	for(int i = 0; i < obstacleCount; i++) {
-		obstacles.push_back(Obstacle(height, width + i*width/obstacleCount, 6));
-	}
-
 	bgColor = Color(0, 0, 0);
 
-	gameState = STATE_PLAY;
-	stateTime = bcm2835_st_read();
+	display.reset(new LEDMatrix(width, height));
+
+	gameState = STATE_MAINMENU;
 }
 
-int FlappySquares::Update() {
-	switch(gameState) {
-		case STATE_PLAY: {
-			int key = GetKey();
+void FlappySquares::StartGame() {
+	int obstacleCount = 3;
 
+	player.reset(new Player(height-8, height/2-4));
+
+	obstacles.clear();
+
+	for(int i = 0; i < obstacleCount; i++) {
+		obstacles.push_back(Obstacle(height-8, width + i*width/obstacleCount, 6));
+	}
+
+	score = 0;
+}
+
+
+
+int FlappySquares::Update() {
+	int key = GetKey();
+
+	switch(gameState) {
+		case STATE_MAINMENU:
+			if(key == 32) {
+				gameState = STATE_PLAY;
+				StartGame();
+			}
+		break;
+		case STATE_PLAY: {
 			//Spacebar
 			if(key == 32)
-				player->Thrust(-1);
+				player->Thrust(-0.8);
 
 			player->Update();
 
 			for(auto &o : obstacles) {
 				o.Move(-speed);
-				if(o.GetPos() < 0)
+				if(o.GetPos() < 0) {
 					o.Reset(width-1);
+					score++;
+				}
+				else if(o.GetPos() == 0) {
+					if(o.GetShape() & (1 << player->GetPos())) {
+						gameState = STATE_GAMEOVER;
+					}
+				}
 			}
 		}
+		break;
+
+		case STATE_GAMEOVER:
+			if(key == 32)
+				gameState = STATE_MAINMENU;
 		break;
 
 		default:
@@ -74,13 +101,24 @@ void FlappySquares::RenderDisplay() {
 	display->Fill(bgColor);
 
 	switch(gameState) {
+	case STATE_MAINMENU:
+		display->DrawStr(0, 0, Color(0, 255, 0), "Fappy");
+		display->DrawStr(6, 8, Color(0, 255, 0), "Sqr");
+	break;
 	case STATE_PLAY: {
 		for(auto &o : obstacles) {
 			if(o.GetPos() < width)
 				DrawObstacle(o);
 		}
-		display->SetPixel(0, player->GetPos(), Color(0, 255, 0));
+		display->SetPixel(0, player->GetPos(), Color(0, 64, 0));
+		display->DrawStr(0, 16, Color(0, 0, 255), std::to_string(score));
 	}
+	break;
+
+	case STATE_GAMEOVER:
+		display->DrawStr(3, 0, Color(255, 0, 0), "Game");
+		display->DrawStr(3, 8, Color(255, 0, 0), "Over");
+		display->DrawStr(0, 16, Color(0, 0, 255), std::to_string(score));
 	break;
 
 	default:
@@ -95,7 +133,7 @@ void FlappySquares::DrawObstacle(const Obstacle &o) {
 
 	for(int i = 0; i < height; i++) {
 		if(shape & (1 << i))
-			display->SetPixel(o.GetPos(), i, Color(255, 0, 0));
+			display->SetPixel(o.GetPos(), i, Color(64, 0, 0));
 	}
 }
 
