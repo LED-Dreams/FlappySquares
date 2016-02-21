@@ -102,8 +102,8 @@ void FlappySquares::RenderDisplay() {
 
 	switch(gameState) {
 	case STATE_MAINMENU:
-		display->DrawStr(0, 0, Color(0, 255, 0), "Dodge");
-		display->DrawStr(3, 8, Color(0, 255, 0), "Wall");
+		display->DrawStr(0, 0, Color(0, 255, 0), "Fappy");
+		display->DrawStr(6, 8, Color(0, 255, 0), "Sqr");
 	break;
 	case STATE_PLAY: {
 		for(auto &o : obstacles) {
@@ -143,6 +143,4 @@ int FlappySquares::GetKey() {
 
 	if(ch == ERR)
 		return -1;
-	else
-		return ch;
-}
+	el
